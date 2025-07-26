@@ -3,16 +3,17 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Modal,
   Dimensions,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import QuoteService from '../services/QuoteService';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const CategoryFilter = ({ visible, onClose, selectedTags, onTagsChange }) => {
   const [tags, setTags] = useState([]);
@@ -50,14 +51,74 @@ const CategoryFilter = ({ visible, onClose, selectedTags, onTagsChange }) => {
     onClose();
   };
 
+  const renderTagItem = ({ item }) => {
+    const { tag, count } = item;
+    const isSelected = selectedTagsLocal.includes(tag);
+    
+    return (
+      <TouchableOpacity
+        style={[
+          styles.tagButton,
+          isSelected && styles.tagButtonSelected
+        ]}
+        onPress={() => toggleTag(tag)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.tagContent}>
+          <Text
+            style={[
+              styles.tagText,
+              isSelected && styles.tagTextSelected
+            ]}
+          >
+            {tag}
+          </Text>
+          <Text
+            style={[
+              styles.tagCount,
+              isSelected && styles.tagCountSelected
+            ]}
+          >
+            {count}
+          </Text>
+        </View>
+        {isSelected && (
+          <Icon 
+            name="checkmark-circle" 
+            size={20} 
+            color="#FFFFFF" 
+            style={styles.checkIcon}
+          />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderHeader = () => (
+    <View style={styles.instructionsContainer}>
+      <Text style={styles.instructionsText}>
+        Select categories to filter quotes. Leave none selected to see all quotes.
+      </Text>
+      {selectedTagsLocal.length > 0 && (
+        <Text style={styles.selectedCount}>
+          {selectedTagsLocal.length} categor{selectedTagsLocal.length === 1 ? 'y' : 'ies'} selected
+        </Text>
+      )}
+    </View>
+  );
+
+  const renderFooter = () => (
+    <View style={styles.bottomSpacer} />
+  );
+
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -79,64 +140,26 @@ const CategoryFilter = ({ visible, onClose, selectedTags, onTagsChange }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Instructions */}
-        <View style={styles.instructionsContainer}>
-          <Text style={styles.instructionsText}>
-            Select categories to filter quotes. Leave none selected to see all quotes.
-          </Text>
-          {selectedTagsLocal.length > 0 && (
-            <Text style={styles.selectedCount}>
-              {selectedTagsLocal.length} categor{selectedTagsLocal.length === 1 ? 'y' : 'ies'} selected
-            </Text>
-          )}
-        </View>
-
         {/* Tags List */}
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.tagsContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {tags.map(({ tag, count }) => (
-            <TouchableOpacity
-              key={tag}
-              style={[
-                styles.tagButton,
-                selectedTagsLocal.includes(tag) && styles.tagButtonSelected
-              ]}
-              onPress={() => toggleTag(tag)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.tagContent}>
-                <Text
-                  style={[
-                    styles.tagText,
-                    selectedTagsLocal.includes(tag) && styles.tagTextSelected
-                  ]}
-                >
-                  {tag}
-                </Text>
-                <Text
-                  style={[
-                    styles.tagCount,
-                    selectedTagsLocal.includes(tag) && styles.tagCountSelected
-                  ]}
-                >
-                  {count}
-                </Text>
-              </View>
-              {selectedTagsLocal.includes(tag) && (
-                <Icon 
-                  name="checkmark-circle" 
-                  size={20} 
-                  color="#FFFFFF" 
-                  style={styles.checkIcon}
-                />
-              )}
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+        <FlatList
+          data={tags}
+          renderItem={renderTagItem}
+          keyExtractor={(item) => item.tag}
+          style={styles.flatList}
+          contentContainerStyle={styles.flatListContent}
+          ListHeaderComponent={renderHeader}
+          ListFooterComponent={renderFooter}
+          showsVerticalScrollIndicator={true}
+          scrollIndicatorInsets={{ right: 1 }}
+          bounces={true}
+          alwaysBounceVertical={false}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
+          removeClippedSubviews={false}
+          automaticallyAdjustContentInsets={false}
+          contentInsetAdjustmentBehavior="never"
+        />
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -151,7 +174,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
@@ -192,12 +215,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '500',
   },
-  scrollView: {
+  flatList: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  tagsContainer: {
+  flatListContent: {
     paddingHorizontal: 20,
     paddingBottom: 20,
+  },
+  bottomSpacer: {
+    height: 100, // Extra space at bottom
   },
   tagButton: {
     backgroundColor: '#FFFFFF',
