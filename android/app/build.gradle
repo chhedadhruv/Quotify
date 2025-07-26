@@ -57,12 +57,12 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false // TEMPORARILY DISABLED
+def enableProguardInReleaseBuilds = true
 
 /**
  * Enable separate APKs per architecture for smaller download sizes
  */
-def enableSeparateBuildPerCPUArchitecture = false // TEMPORARILY DISABLED
+def enableSeparateBuildPerCPUArchitecture = project.hasProperty('enableApkSplitting') ? project.enableApkSplitting.toBoolean() : true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -87,14 +87,14 @@ android {
         applicationId "com.dhruvchheda.quotify"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "1.0.3"
+        versionCode 6
+        versionName "1.0.5"
         
         // Enable vector drawable support for smaller APK
-        // vectorDrawables.useSupportLibrary = true // TEMPORARILY DISABLED
+        vectorDrawables.useSupportLibrary = true
         
         // Disable generation of unused resources
-        // resConfigs "en" // TEMPORARILY DISABLED
+        resConfigs "en"
     }
     
     // Enable APK splitting by architecture for smaller downloads
@@ -129,24 +129,31 @@ android {
         }
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false // TEMPORARILY DISABLED
-            shrinkResources false // TEMPORARILY DISABLED
-            // proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro" // TEMPORARILY DISABLED
+            minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            
+            // Enable debug symbols for crash reporting
+            ndk {
+                debugSymbolLevel 'FULL'
+            }
         }
     }
     
     // Map for the version code that gives each ABI a value.
     project.ext.abiCodes = ["armeabi-v7a": 1, "x86": 2, "arm64-v8a": 3, "x86_64": 4]
     
-    // Configure variant outputs for APK splitting
+    // Configure variant outputs for APK splitting (only for APK builds)
     applicationVariants.all { variant ->
-        variant.outputs.each { output ->
-            // For each separate APK per architecture, set a unique version code
-            def versionCodes = project.ext.abiCodes
-            def abi = output.getFilter(com.android.build.OutputFile.ABI)
-            if (abi != null) {  // null for the universal APK
-                output.versionCodeOverride =
-                    defaultConfig.versionCode * 1000 + versionCodes.get(abi)
+        if (variant.buildType.name == 'release' && variant.name.contains('Release')) {
+            variant.outputs.each { output ->
+                // For each separate APK per architecture, set a unique version code
+                def versionCodes = project.ext.abiCodes
+                def abi = output.getFilter(com.android.build.OutputFile.ABI)
+                if (abi != null) {  // null for the universal APK
+                    output.versionCodeOverride =
+                        defaultConfig.versionCode * 1000 + versionCodes.get(abi)
+                }
             }
         }
     }
@@ -160,5 +167,42 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// Task to generate debug symbols for Google Play Console
+android.applicationVariants.all { variant ->
+    if (variant.buildType.name == 'release') {
+        def taskName = "generate${variant.name.capitalize()}DebugSymbols"
+        task(taskName) {
+            doLast {
+                def symbolsDir = new File("${project.buildDir}/outputs/native-debug-symbols/${variant.name}")
+                symbolsDir.mkdirs()
+                
+                // Copy debug symbols from NDK build
+                def ndkSymbolsDir = new File("${project.buildDir}/intermediates/merged_native_libs/${variant.name}/out/lib")
+                if (ndkSymbolsDir.exists()) {
+                    ndkSymbolsDir.eachDir { archDir ->
+                        archDir.eachFile { symbolFile ->
+                            if (symbolFile.name.endsWith('.so')) {
+                                def targetDir = new File(symbolsDir, archDir.name)
+                                targetDir.mkdirs()
+                                def targetFile = new File(targetDir, symbolFile.name)
+                                symbolFile.bytes = targetFile.bytes
+                            }
+                        }
+                    }
+                }
+                
+                println "Debug symbols generated in: ${symbolsDir.absolutePath}"
+            }
+        }
+        
+        // Make bundle task depend on debug symbols generation
+        if (variant.name.contains('Release')) {
+            variant.bundleProvider.configure {
+                dependsOn taskName
+            }
+        }
     }
 }
