@@ -9,6 +9,7 @@ import {
   Share,
   Animated,
   Platform,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -21,6 +22,7 @@ const QuoteCard = ({ quote, author, tags = [], onNewQuote, loading, isOffline })
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [animatedValue] = useState(new Animated.Value(0));
+  const [showFullQuote, setShowFullQuote] = useState(false);
 
   // Create a unique key for each quote
   const getQuoteKey = (quote, author) => {
@@ -166,7 +168,7 @@ const QuoteCard = ({ quote, author, tags = [], onNewQuote, loading, isOffline })
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.quoteIconContainer}>
-            <Text style={styles.quoteIcon}>“</Text>
+            <Text style={styles.quoteIcon}>"</Text>
           </View>
           <TouchableOpacity
             style={[styles.favoriteButton, favoriteLoading && styles.favoriteButtonDisabled]}
@@ -183,7 +185,31 @@ const QuoteCard = ({ quote, author, tags = [], onNewQuote, loading, isOffline })
             </Animated.View>
           </TouchableOpacity>
         </View>
-        <Text style={styles.quoteText}>{quote}</Text>
+        
+        <ScrollView 
+          style={styles.quoteScrollContainer}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
+          <Text 
+            style={styles.quoteText}
+            numberOfLines={showFullQuote ? undefined : 3}
+            onPress={() => setShowFullQuote(!showFullQuote)}
+          >
+            {quote}
+          </Text>
+        </ScrollView>
+        
+        {!showFullQuote && (
+          <TouchableOpacity
+            style={styles.showMoreButton}
+            onPress={() => setShowFullQuote(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.showMoreText}>Show more...</Text>
+          </TouchableOpacity>
+        )}
+        
         <View style={styles.authorContainer}>
           <Text style={styles.authorText}>— {author}</Text>
           {isOffline && (
@@ -306,15 +332,28 @@ const styles = StyleSheet.create({
   favoriteButtonDisabled: {
     opacity: 0.6,
   },
+  quoteScrollContainer: {
+    maxHeight: 120, // Limit height for 3 lines
+    marginBottom: 8,
+  },
   quoteText: {
     fontSize: 20,
     lineHeight: 32,
     color: '#2c3e50',
     textAlign: 'center',
     fontStyle: 'italic',
-    marginBottom: 24,
     fontWeight: '400',
     letterSpacing: 0.3,
+  },
+  showMoreButton: {
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  showMoreText: {
+    color: '#667eea',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   authorContainer: {
     alignItems: 'flex-end',
