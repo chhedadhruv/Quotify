@@ -87,8 +87,8 @@ android {
         applicationId "com.dhruvchheda.quotify"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.6"
+        versionCode 8
+        versionName "1.0.7"
         
         // Enable vector drawable support for smaller APK
         vectorDrawables.useSupportLibrary = true
