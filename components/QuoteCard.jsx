@@ -22,7 +22,6 @@ const QuoteCard = ({ quote, author, tags = [], onNewQuote, loading, isOffline })
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [animatedValue] = useState(new Animated.Value(0));
-  const [showFullQuote, setShowFullQuote] = useState(false);
 
   // Create a unique key for each quote
   const getQuoteKey = (quote, author) => {
@@ -188,27 +187,14 @@ const QuoteCard = ({ quote, author, tags = [], onNewQuote, loading, isOffline })
         
         <ScrollView 
           style={styles.quoteScrollContainer}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
           nestedScrollEnabled={true}
+          contentContainerStyle={styles.quoteScrollContent}
         >
-          <Text 
-            style={styles.quoteText}
-            numberOfLines={showFullQuote ? undefined : 3}
-            onPress={() => setShowFullQuote(!showFullQuote)}
-          >
+          <Text style={styles.quoteText}>
             {quote}
           </Text>
         </ScrollView>
-        
-        {!showFullQuote && (
-          <TouchableOpacity
-            style={styles.showMoreButton}
-            onPress={() => setShowFullQuote(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.showMoreText}>Show more...</Text>
-          </TouchableOpacity>
-        )}
         
         <View style={styles.authorContainer}>
           <Text style={styles.authorText}>— {author}</Text>
@@ -293,6 +279,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     width: width - 40,
     minHeight: 220,
+    maxHeight: 350, // Set max height to prevent expansion
     justifyContent: 'center',
     // iOS Shadow
     ...Platform.select({
@@ -333,8 +320,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   quoteScrollContainer: {
-    maxHeight: 120, // Limit height for 3 lines
-    marginBottom: 8,
+    maxHeight: 140, // Increased slightly for better readability
+    marginBottom: 16,
+  },
+  quoteScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   quoteText: {
     fontSize: 20,
@@ -344,16 +335,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontWeight: '400',
     letterSpacing: 0.3,
-  },
-  showMoreButton: {
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  showMoreText: {
-    color: '#667eea',
-    fontSize: 14,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
   },
   authorContainer: {
     alignItems: 'flex-end',

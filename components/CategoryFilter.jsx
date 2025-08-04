@@ -65,14 +65,24 @@ const CategoryFilter = ({ visible, onClose, selectedTags, onTagsChange }) => {
         activeOpacity={0.7}
       >
         <View style={styles.tagContent}>
-          <Text
-            style={[
-              styles.tagText,
-              isSelected && styles.tagTextSelected
-            ]}
-          >
-            {tag}
-          </Text>
+          <View style={styles.leftContent}>
+            {isSelected && (
+              <Icon 
+                name="checkmark-circle" 
+                size={20} 
+                color="#FFFFFF" 
+                style={styles.checkIcon}
+              />
+            )}
+            <Text
+              style={[
+                styles.tagText,
+                isSelected && styles.tagTextSelected
+              ]}
+            >
+              {tag}
+            </Text>
+          </View>
           <Text
             style={[
               styles.tagCount,
@@ -82,14 +92,6 @@ const CategoryFilter = ({ visible, onClose, selectedTags, onTagsChange }) => {
             {count}
           </Text>
         </View>
-        {isSelected && (
-          <Icon 
-            name="checkmark-circle" 
-            size={20} 
-            color="#FFFFFF" 
-            style={styles.checkIcon}
-          />
-        )}
       </TouchableOpacity>
     );
   };
@@ -150,14 +152,7 @@ const CategoryFilter = ({ visible, onClose, selectedTags, onTagsChange }) => {
           ListHeaderComponent={renderHeader}
           ListFooterComponent={renderFooter}
           showsVerticalScrollIndicator={true}
-          scrollIndicatorInsets={{ right: 1 }}
-          bounces={true}
-          alwaysBounceVertical={false}
           keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true}
-          removeClippedSubviews={false}
-          automaticallyAdjustContentInsets={false}
-          contentInsetAdjustmentBehavior="never"
         />
       </SafeAreaView>
     </Modal>
@@ -258,6 +253,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  leftContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   tagText: {
     fontSize: 16,
     fontWeight: '500',
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   checkIcon: {
-    marginLeft: 8,
+    marginRight: 12,
   },
 });
 
